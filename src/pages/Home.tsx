@@ -111,7 +111,7 @@ export default function Home() {
       <div className="z-10 rounded-2xl border border-white/20 bg-white/10 px-8 py-6 shadow-xl backdrop-blur-md">
         {saidYes ? (
           <ShinyText
-            text="Anche io! 💕"
+            text="Love you 💕"
             speed={2}
             delay={0}
             color="#ff78e4"
@@ -124,19 +124,19 @@ export default function Home() {
           />
         ) : (
           <>
-            <h3 className="text-3xl font-bold text-gray-700">Hello World?</h3>
+            <h3 className="text-1xl font-bold text-gray-700">Will you be my valentine?</h3>
             <div className="mt-4 flex gap-3">
               <Button
                 variant="outline"
                 size="default"
                 className="w-1/2"
                 onClick={() => {
-                setSaidYes(true)
-                setFloatingNos([])
-              }}
+                  setSaidYes(true)
+                  setFloatingNos([])
+                }}
               >
                 <ShinyText
-                  text="✨ Si"
+                  text="✨ Yes"
                   speed={2}
                   delay={0}
                   color="#330029"
