@@ -70,7 +70,7 @@ function spawnWaveNoButtons(count: number, wave: number): WaveNoButton[] {
   for (let i = 0; i < count; i++) {
     const side = Math.floor(Math.random() * 4)
     let startX: number, startY: number
-    const OFF = 2
+    const OFF = 10
     if (side === 0) {
       startX = -OFF
       startY = 10 + Math.random() * 80
