@@ -70,18 +70,19 @@ function spawnWaveNoButtons(count: number, wave: number): WaveNoButton[] {
   for (let i = 0; i < count; i++) {
     const side = Math.floor(Math.random() * 4)
     let startX: number, startY: number
+    const OFF = 2
     if (side === 0) {
-      startX = 0
+      startX = -OFF
       startY = 10 + Math.random() * 80
     } else if (side === 1) {
-      startX = 100
+      startX = 100 + OFF
       startY = 10 + Math.random() * 80
     } else if (side === 2) {
       startX = 10 + Math.random() * 80
-      startY = 0
+      startY = -OFF
     } else {
       startX = 10 + Math.random() * 80
-      startY = 100
+      startY = 100 + OFF
     }
     result.push({
       id: nextId(),
@@ -120,6 +121,8 @@ export default function Home() {
   const waveProgressRef = useRef<Record<string, number>>({})
   const waveButtonElementsRef = useRef<Map<string, HTMLButtonElement>>(new Map())
   const yesButtonRef = useRef<HTMLButtonElement | null>(null)
+  const yesBoxRef = useRef<HTMLDivElement | null>(null)
+  const noInsideBoxRef = useRef(false)
   const [animationTick, setAnimationTick] = useState(0)
   const currentWaveRef = useRef(0)
   const gameStartTimeRef = useRef(0)
@@ -200,7 +203,9 @@ export default function Home() {
         return
       }
       const yesRect = yesButtonRef.current?.getBoundingClientRect()
+      const boxRect = yesBoxRef.current?.getBoundingClientRect()
       let hitCenter = false
+      let anyNoInsideBox = false
       for (const b of buttons) {
         const effectiveElapsed = Math.max(0, elapsedSec - b.spawnDelay)
         const rawProgress = Math.min(1, effectiveElapsed / WAVE_DURATION_SEC)
@@ -213,13 +218,14 @@ export default function Home() {
           el.style.left = `${x}%`
           el.style.top = `${y}%`
           el.style.transform = "translate(-50%, -50%)"
-          if (yesRect) {
-            const noRect = el.getBoundingClientRect()
-            if (rectsOverlap(yesRect, noRect)) hitCenter = true
-          }
+          const noRect = el.getBoundingClientRect()
+          if (yesRect && rectsOverlap(yesRect, noRect)) hitCenter = true
+          if (boxRect && rectsOverlap(boxRect, noRect)) anyNoInsideBox = true
         }
       }
+      noInsideBoxRef.current = anyNoInsideBox
       if (hitCenter) {
+        noInsideBoxRef.current = false
         setGameOverWave(currentWaveRef.current)
         setGameOverTime((Date.now() - gameStartTimeRef.current) / 1000)
         setGamePhase("gameover")
@@ -328,7 +334,14 @@ export default function Home() {
         berserk ? "bg-black text-white" : "bg-background"
       }`}
     >
-      <div className="z-10 rounded-2xl border border-white/20 bg-white/10 px-8 py-6 shadow-xl backdrop-blur-md">
+      <div
+        ref={yesBoxRef}
+        className={`z-10 rounded-2xl border px-8 py-6 shadow-xl backdrop-blur-md transition-colors duration-150 ${
+          berserk && gamePhase === "wave" && noInsideBoxRef.current
+            ? "border-red-500 bg-red-950/40"
+            : "border-white/20 bg-white/10"
+        }`}
+      >
         {saidYes ? (
           <ShinyText
             text="Love you 💕"
@@ -347,6 +360,49 @@ export default function Home() {
             <p className="text-xl font-bold text-red-400">Game Over</p>
             <p className="mt-2 text-gray-300">Wave {gameOverWave}</p>
             <p className="text-gray-300">Time: {gameOverTime.toFixed(1)}s</p>
+            <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
+
+              <Button
+              variant="outline"
+              size="default"
+              className="border-red-400 text-red-400 bg-gray-950/50  hover:bg-red-950/50"
+              onClick={() => {
+                const startTime = Date.now()
+                setGamePhase("countdown")
+                setCountdownValue(COUNTDOWN_SECONDS)
+                setCurrentWave(0)
+                setWaveNoButtons([])
+                setWaveStartTime(0)
+                setGameStartTime(startTime)
+                gameStartTimeRef.current = startTime
+              }}
+            >
+              <ShinyText
+                text="Try again"
+                speed={2}
+                delay={0}
+                color="#fc0303"
+                shineColor="#ff8585"
+                spread={120}
+                direction="left"
+                yoyo={false}
+                pauseOnHover={false}
+                disabled={false}
+              />
+            </Button>
+              <Button
+                size="default"
+                className="border-gray-400 text-gray-300 hover:bg-white/10"
+                onClick={() => {
+                  setRealNoClicks(0)
+                  setFloatingNos([])
+                  setGamePhase(null)
+                  setWaveNoButtons([])
+                }}
+              >
+                I've learned my lesson
+              </Button>
+            </div>
           </div>
         ) : berserk ? (
           <div className="flex justify-center">
@@ -461,12 +517,15 @@ export default function Home() {
               variant="outline"
               size="default"
               className="pointer-events-auto absolute border-2 border-red-400 bg-red-600 text-white shadow-lg"
-              style={{
-                left: `${btn.startX}%`,
-                top: `${btn.startY}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-              onClick={() => removeWaveNo(btn.id)}
+                style={{
+                  left: `${btn.startX}%`,
+                  top: `${btn.startY}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  removeWaveNo(btn.id)
+                }}
             >
               No
             </Button>
